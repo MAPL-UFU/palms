@@ -30,5 +30,8 @@ class Place:
         self.position = [0, 0]
         self.marking = 0
 
+
+    def set_marking(self,marking):
+          self.marking = marking
     def __str__(self):
         return self.label

@@ -7,81 +7,30 @@ from .Arc import Arc
 import xml.etree.ElementTree as elemTree # XML parser
 
 def parse_pnml_file(file):
-    """ This method parse all Petri nets of the given file.
-
-    This method expects a path to a VipTool pnml file which
-    represent a Petri net (.pnml), parse all Petri nets
-    from the file and returns the Petri nets as list of PetriNet
-    objects.
-
-    XML format:
-    <pnml>
-      <net id="...">
-        (<page>)
-        <name>
-          <text>name of Petri net</text>
-        </name>
-        <transition id="...">
-          <name>
-            <text>label of transition</text>
-            <graphics>
-              <offset x="0" y="0"/>
-            </graphics>
-          </name>
-          <graphics>
-            <position x="73" y="149"/>
-          </graphics>
-        </transition>
-        ...
-        <place id="...">
-          <name>
-            <text>label of transition</text>
-            <graphics>
-              <offset x="0" y="0"/>
-            </graphics>
-          </name>
-          <graphics>
-            <position x="73" y="149"/>
-          </graphics>
-          <initialMarking>
-            <text>1</text>
-          </initialMarking>
-        </place>
-        ...
-        <arc id="..." source="id of source event" target="id of target event">
-          <inscription>
-            <text>1</text>
-          </inscription>
-        </arc>
-        ...
-        (</page>)
-      </net>
-      ...
-    </pnml>
-    """
 
     tree = elemTree.parse(file) # parse XML with ElementTree
     root = tree.getroot()
-
     nets = [] # list for parsed PetriNet objects
-
-    #xmlns = '{http://www.pnml.org/version-2009/grammar/pnml}' not working
-    xmlns = ''
+    xmlns = ""
 
     for net_node in root.iter(xmlns+'net'):
         # create PetriNet object
         net = PetriNet()
-        net.id = net_node.get('id')
+        net.reset_len() # Reset lenght of places and transitions
+        net.id = net_node.get('id') 
         netnmnode = net_node.find('./'+xmlns+'name/'+xmlns+'text')
+
         if netnmnode is not None:
              net.name = netnmnode.text
         else:
              net.name = net.id
 
-
         # and parse transitions
         for transition_node in net_node.iter(xmlns+'transition'):
+           
             transition = Transition()
+            net.set_len_transition()
+
             transition.id = transition_node.get('id')
             transition.label = transition.id if transition_node.find('./name/text')== None else transition_node.find('./name/text').text
             position_node = transition_node.find('./graphics/position')
@@ -97,6 +46,7 @@ def parse_pnml_file(file):
         # and parse places
         for place_node in net_node.iter(xmlns+'place'):
             place = Place()
+            net.set_len_place()
             place.id = place_node.get('id')
             place.label = place.id if place_node.find('./'+xmlns+'name/'+xmlns+'text')== None else place_node.find('./'+xmlns+'name/'+xmlns+'text').text
             position_node = place_node.find('./'+xmlns+'graphics/'+xmlns+'position')
@@ -110,11 +60,11 @@ def parse_pnml_file(file):
 
             place.marking = 0 if place_node.find('./initialMarking/text')== None else int(place_node.find('./initialMarking/text').text)
             net.places[place.id] = place
+            net.marking.append({place.id:place.marking})
 
         # and arcs
         for arc_node in net_node.iter(xmlns+'arc'):
             arc = Arc()
-
             arc.id = arc_node.get('id')
             arc.source = arc_node.get('source')
             arc.target = arc_node.get('target')
@@ -131,11 +81,9 @@ def parse_pnml_file(file):
             else:
                 arc.inscription = "1"
 
-
             net.arcs.append(arc)
-
-            nets.append(net)
-            arc.net = net
+            
+        nets.append(net)
 
     return nets
 
@@ -189,6 +137,7 @@ def write_pnml_file(n, filename, relative_offset=True):
 
     tree = elemTree.ElementTree(element=pnml)
     tree.write(filename, encoding="utf-8", xml_declaration=True, method="xml")
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

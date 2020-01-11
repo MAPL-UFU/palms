@@ -1,3 +1,6 @@
 {
-    "python.pythonPath": "pms-env/bin/python"
+    "python.pythonPath": "pms-env/bin/python",
+    "files.associations": {
+        "*.pnml": "xml",
+    }
 }
