@@ -19,18 +19,20 @@ class MsgThreadQt(QThread):
     def run(self):
         port =self.serial_port #'/dev/ttyUSB0'
         while True:
-
-            done,_  = self.loop.run_until_complete(start(self.loop,port))
-            for fut in done:
-                self.pnrd = fut.result()
             try:
-                self.msg_status.emit("Receiving date",self.pnrd)
-                print(f"{self.pnrd}")
-                sleep(0.1)
+                done,_  = self.loop.run_until_complete(start(self.loop,port))
+                for fut in done:
+                    self.pnrd = fut.result()
+                try:
+                    self.msg_status.emit("Receiving date",self.pnrd)
+                    print(f"{self.pnrd}")
+                    sleep(0.1)
+                except:
+                    self.msg_status.emit("Serial Connection Error",dict())
+                    print(f"{self.pnrd}")
+                    sleep(0.1)
             except:
-                self.msg_status.emit("Serial Connection Error",dict())
-                print(f"{self.pnrd}")
-                sleep(0.1)
+                self.msg_status.emit("Permission Denied Serial Port",dict())
         # is_ok,file_names_array = firebird.connect(self.query_dict, location_dir='dados')
         # if is_ok:
             
