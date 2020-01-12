@@ -14,6 +14,7 @@ from MsgThreadQt import MsgThreadQt
 from gui.MainWindow import Ui_MainWindow
 from pprint import pprint
 from palms.Pnrd import Pnrd
+import serial
 
 
 class PalmsGui():
@@ -32,10 +33,11 @@ class PalmsGui():
         self.MainWindow = QtWidgets.QMainWindow()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self.MainWindow) 
-#----------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------        
+        self.ui.serialConection_lineEdit.setText(self.serial_port)
         self.ui.actionopen_pnml.triggered.connect(self.open_file)
         self.ui.confirmSerialConection_pushButton.clicked.connect(self.verify_pnml_loader)
-        self.ui.serialConection_lineEdit.setText(self.serial_port)
+
         self.ui.stopConnection_pushButton.clicked.connect(self.stop_connection)
 #---------------------------------------------------------------------------------------------
         self.MainWindow.show()
@@ -115,9 +117,17 @@ class PalmsGui():
     
 
     def verify_pnml_loader(self):
-
+        self.serial_port = self.ui.serialConection_lineEdit.text()
         if self.pnrd_setup_is_ok:
-            self.connect_serial_port()
+            try:
+                ard = serial.Serial(self.serial_port,9600,timeout=5)
+                print(self.serial_port)
+                ard.flush()
+                ard.close()
+                sleep(0.1)
+                self.connect_serial_port()
+            except:
+                self.ui.info_label.setText("Problem with your Serial Connection")
         else:
             self.ui.info_label.setStyleSheet('QLabel#info_label {color: red}')
             self.ui.info_label.setText("You need to load PNML file first")
@@ -127,11 +137,10 @@ class PalmsGui():
         self.serial_port = self.ui.serialConection_lineEdit.text()
         self.msg_thread = MsgThreadQt(self.serial_port, parent=None)
         self.msg_thread.start()
+        self.msg_thread.msg_status.connect(self.set_msg_status)
         self.ui.confirmSerialConection_pushButton.setEnabled(False)
         self.ui.info_label.setStyleSheet('QLabel#info_label {color: green}')
         self.ui.info_label.setText("Successfully connected")
-        self.msg_thread.msg_status.connect(self.set_msg_status)
-
 
     def set_msg_status(self, msg_status, msg):
 
@@ -139,6 +148,7 @@ class PalmsGui():
             self.pnrd_serial['id'] = msg["id"]
             self.pnrd_serial['reader'] = msg["readerId"]
             self.pnrd_serial['error'] = msg["pnrd"]
+            
             self.ui.id_label.setText("TagId: "+str( self.pnrd_serial['id']))
             self.ui.reader_label.setText("Reader: "+str( self.pnrd_serial['reader']))
             self.ui.exception_label.setText("PNRD: "+str( self.pnrd_serial['error']))
@@ -148,10 +158,14 @@ class PalmsGui():
         except:
             if  msg_status !=None: 
                 self.ui.info_label.setStyleSheet('QLabel#info_label {color: red}')
-                self.ui.info_label.setText( msg_status) 
+                self.ui.info_label.setText(msg_status) 
+                self.msg_thread.stop()
+                self.ui.confirmSerialConection_pushButton.setEnabled(True)
+
             else:
                 self.ui.info_label.setStyleSheet('QLabel#info_label {color: red}')
                 self.ui.info_label.setText("Erro ao carregar dados") 
+
 
         
            
@@ -175,3 +189,5 @@ class PalmsGui():
         except:
             self.ui.info_label.setStyleSheet('QLabel#info_label {color: red}')
             self.ui.info_label.setText("Close Your Serial Connection before Stop")
+            self.ui.confirmSerialConection_pushButton.setEnabled(False)
+            self.ui.stopConnection_pushButton.setEnabled(False)

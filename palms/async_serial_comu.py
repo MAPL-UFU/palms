@@ -5,10 +5,10 @@ import datetime
 
 
 async def start(loop,port):
-    reader, _ = await serial_asyncio.open_serial_connection(url=port, baudrate=9600)
-    received = recv(reader)
-    return await asyncio.wait([received])
-   
+        reader, _ = await serial_asyncio.open_serial_connection(url=port, baudrate=9600)
+        received = recv(reader)
+        return await asyncio.wait([received])
+
 async def recv(r):
     while True:
         try:

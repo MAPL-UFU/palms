@@ -17,9 +17,11 @@ class MsgThreadQt(QThread):
         self.loop = asyncio.get_event_loop()
 
     def run(self):
-        port =self.serial_port #'/dev/ttyUSB0'
         while True:
+            if not self.is_running:
+                break
             try:
+                port =self.serial_port #'/dev/ttyUSB0'
                 done,_  = self.loop.run_until_complete(start(self.loop,port))
                 for fut in done:
                     self.pnrd = fut.result()
@@ -33,6 +35,7 @@ class MsgThreadQt(QThread):
                     sleep(0.1)
             except:
                 self.msg_status.emit("Permission Denied Serial Port",dict())
+                
         # is_ok,file_names_array = firebird.connect(self.query_dict, location_dir='dados')
         # if is_ok:
             
@@ -55,4 +58,5 @@ class MsgThreadQt(QThread):
         print('stopping thread...')
         self.terminate()
         print('Thread morta')
+        self.loop.stop()
         self.loop.close()
