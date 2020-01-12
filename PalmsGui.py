@@ -159,7 +159,6 @@ class PalmsGui():
             if  msg_status !=None: 
                 self.ui.info_label.setStyleSheet('QLabel#info_label {color: red}')
                 self.ui.info_label.setText(msg_status) 
-                self.msg_thread.stop()
                 self.ui.confirmSerialConection_pushButton.setEnabled(True)
 
             else:

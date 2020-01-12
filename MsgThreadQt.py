@@ -28,13 +28,14 @@ class MsgThreadQt(QThread):
                 try:
                     self.msg_status.emit("Receiving date",self.pnrd)
                     print(f"{self.pnrd}")
-                    sleep(0.1)
+                    sleep(5)
                 except:
                     self.msg_status.emit("Serial Connection Error",dict())
                     print(f"{self.pnrd}")
-                    sleep(0.1)
+                    sleep(5)
             except:
                 self.msg_status.emit("Permission Denied Serial Port",dict())
+                self.loop.stop()
                 
         # is_ok,file_names_array = firebird.connect(self.query_dict, location_dir='dados')
         # if is_ok:
