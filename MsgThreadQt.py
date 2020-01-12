@@ -28,11 +28,11 @@ class MsgThreadQt(QThread):
                 try:
                     self.msg_status.emit("Receiving date",self.pnrd)
                     print(f"{self.pnrd}")
-                    sleep(5)
+                    sleep(1)
                 except:
                     self.msg_status.emit("Serial Connection Error",dict())
                     print(f"{self.pnrd}")
-                    sleep(5)
+                    sleep(1)
             except:
                 self.msg_status.emit("Permission Denied Serial Port",dict())
                 self.loop.stop()
