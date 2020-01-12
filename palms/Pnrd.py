@@ -33,7 +33,6 @@ class Pnrd:
                 self.len_transitions = net.len_transitions
                 self.len_places = net.len_places 
                 self.marking_vector, self.incidence_matrix_t = net.incidence_matrix()
-
                 self.numpy_marking_vector = np.array(self.marking_vector)
                 self.numpy_inci_matrix_t = np.matrix(self.incidence_matrix_t)
 
@@ -43,25 +42,45 @@ class Pnrd:
             return "Erro ao Criar Net", False
 
 
-    def update_pnml(self,fire_vector):
-        if len(fire_vector) ==self.len_transitions:
-            for net in self.nets:
-                self.fire_vector = fire_vector
-                self.numpy_fire_vector = np.array(self.fire_vector)
-                self.numpy_fire_vector.shape = (self.len_transitions,1)
+    def update_pnml(self,fire_vector=list(),token=list(),_type='fire'):
 
-                self.numpy_marking_vector = self.numpy_marking_vector + self.numpy_inci_matrix_t *self.numpy_fire_vector
-                self.marking_vector = self.numpy_marking_vector.transpose().tolist()[0]
+        if _type =='fire':
+            if len(fire_vector) ==self.len_transitions:
+                
+                for net in self.nets:
+                    self.fire_vector = fire_vector
+                    self.numpy_fire_vector = np.array(self.fire_vector)
+                    self.numpy_fire_vector.shape = (self.len_transitions,1)
 
-                net.mount_marking(self.marking_vector)
-                try:
-                    write_pnml_file(net,self.file)
-                    return "Arquivo Enviado com Sucesso", True
-                except:
-                    return "Erro ao Enviar o Arquivo", False
-        else:
-            msg = f"fire Vector possui um Tamanho Diferente de {self.len_transitions}"
-            return msg,False
+                    self.numpy_marking_vector = self.numpy_marking_vector + self.numpy_inci_matrix_t *self.numpy_fire_vector
+                    self.marking_vector = self.numpy_marking_vector.transpose().tolist()[0]
+
+                    net.mount_marking(self.marking_vector)
+                    try:
+                        write_pnml_file(net,self.file)
+                        return "Arquivo Enviado com Sucesso", True
+                    except:
+                        return "Erro ao Enviar o Arquivo", False
+            else:
+                msg = f"fire Vector possui um Tamanho Diferente de {self.len_transitions}"
+                return msg,False
+        elif _type =='token':
+            if len(token) ==self.len_places:
+                for net in self.nets:
+                    self.numpy_marking_vector = np.array(token)
+                    self.numpy_marking_vector.shape = (self.len_places,1)
+                    self.marking_vector = self.numpy_marking_vector.transpose().tolist()[0]
+                    self.marking_vector = token                    
+
+                    net.mount_marking(self.marking_vector)
+                    try:
+                        write_pnml_file(net,self.file)
+                        return "Arquivo Enviado com Sucesso", True
+                    except:
+                        return "Erro ao Enviar o Arquivo", False
+            else:
+                msg = f"Token Vector com um tamanho diferente de {self.len_places}"
+                return msg,False
 
 
     def __str__(self):

@@ -51,7 +51,7 @@ class PetriNet:
 
     def mount_marking(self, marking_vector):
         count = 0
-        if len(marking_vector) ==len(self.places):
+        if len(marking_vector) ==self.len_places :
             for place in self.places.values():
                 place.set_marking( marking_vector[count])
                 count+=1

@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "pms-env/bin/python",
+    "python.pythonPath": "palmsEnv/bin/python",
     "files.associations": {
         "*.pnml": "xml",
     }
