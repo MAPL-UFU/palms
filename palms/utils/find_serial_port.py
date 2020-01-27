@@ -32,7 +32,7 @@ def serial_ports():
             result_verified.append(port)
             
         except (OSError, serial.SerialException) as e:
-            print(e)
+            pass
     return result_verified,result_unverified
 
 

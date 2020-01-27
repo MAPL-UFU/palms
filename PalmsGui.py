@@ -1,6 +1,5 @@
 '''
 Created on Jan , 2020
-
 @author: Roger H. Carrijo
 git: roger1618
 '''
@@ -16,8 +15,9 @@ from gui.MainWindow import Ui_MainWindow
 from pprint import pprint
 
 from palms.Pnrd import Pnrd
-from palms.utils.find_serial_port import serial_ports
 from palms.FileCreator import FileCreator
+from palms.utils.find_serial_port import serial_ports
+from palms.utils.template import init_template
 import serial
 
 
@@ -36,6 +36,8 @@ class PalmsGui():
         self.qtd_antena = 0    
         self.reader_list = []
         self.transition_names = []
+        self.array_matrix = []
+        self.array_marking= []
         self.palms_type = ''
         self.text_setup = ''
         app = QtWidgets.QApplication(sys.argv)
@@ -70,6 +72,10 @@ class PalmsGui():
         }
         palms_file = FileCreator('palmsSetup','setup','palms')
         palms_file.set_text(json.dumps(dict_palms, indent=4, sort_keys=True))
+        palms_init_template = FileCreator('palmsSetup','initTag','ino')
+        str_array_matrix = ','.join(map(str, self.array_matrix))
+        str_array_marking= ','.join(map(str, self.array_marking))
+        palms_init_template.set_text(init_template(self.pnrd.len_places, self.pnrd.len_transitions, str_array_matrix,str_array_marking))
 
 
     def append_reader(self):
@@ -81,7 +87,6 @@ class PalmsGui():
             self.serial_port.remove(serial_connection)
             self.set_comboBox(self.serial_port,'COM')
             self.reader_list.append({"readerName":reader_name,"qtdAntenna":qtd_antena,"serialPort":serial_connection})
-            print(self.reader_list)
             self.text_setup += f"Reader: {reader_name} Port: '{serial_connection}' Ant: {qtd_antena} units\n"
            
             self.ui.setupInfo_label.setText(f'P: {self.pnrd.len_places} | T: {self.pnrd.len_transitions}\n{self.text_setup}')
@@ -123,7 +128,8 @@ class PalmsGui():
         if ok:
             _,created = self.pnrd.create_net()
             if created:
-                self.setup_matrix(self.pnrd.len_transitions,self.pnrd.len_places)
+                self.setup_matrix_view(self.pnrd.len_transitions,self.pnrd.len_places)
+                self.setup_matrix_vector(self.pnrd.len_places,self.pnrd.len_transitions)
                 self.setup_marking_vector(self.pnrd.len_places)
                 self.pnrd_setup_is_ok = True
                 self.count_antenna = self.pnrd.len_transitions
@@ -131,13 +137,12 @@ class PalmsGui():
                 self.ui.qtdTotalTansitions_label.setText(f'(Left: {self.count_antenna})')
 
 
-    def setup_matrix(self,n_row,n_col):
+    def setup_matrix_view(self,n_row,n_col):
         self.ui.incMatrix_tw.setRowCount(n_row)
         self.ui.incMatrix_tw.setColumnCount(n_col+1)
         count_row = 0
         horizontalHeader = []
         verticalHeader = []
-        self.array_matrix = []
         for row in self.pnrd.incidence_matrix:
             count_col = 0
             for i in row:
@@ -146,19 +151,23 @@ class PalmsGui():
                     if count_col==(n_col -1):
                         self.ui.incMatrix_tw.setItem( count_row,count_col+1, QTableWidgetItem(f"transition {count_row}"))
                     self.ui.incMatrix_tw.setItem( count_row,count_col, QTableWidgetItem(f"{i}"))
-                    count_col+=1
-                    self.array_matrix.append(i)
-                   
-
+                    count_col+=1                 
             verticalHeader.append(f" T{count_row} ")
-
             count_row+=1
         horizontalHeader.append(f"  ")
-        self.ui.matrix_array.setText(f"{self.array_matrix}")
         self.ui.incMatrix_tw.setHorizontalHeaderLabels(horizontalHeader)
         self.ui.incMatrix_tw.setVerticalHeaderLabels(verticalHeader)   
         self.ui.places_label.setText(f'Places: {self.pnrd.len_places}')
         self.ui.transitions_label.setText(f'Transitions: {self.pnrd.len_transitions}')
+
+
+    def setup_matrix_vector(self,n_row,n_col):
+        self.array_matrix = []
+        for row in self.pnrd.incidence_matrix_t:
+            for i in row:
+                    self.array_matrix.append(i)
+        self.ui.matrix_array.setText(f"{self.array_matrix}")
+
 
 
     def setup_marking_vector(self,n_row):
