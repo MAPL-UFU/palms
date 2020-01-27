@@ -144,7 +144,7 @@ class PalmsGui():
                     if len(horizontalHeader) < n_col:
                         horizontalHeader.append(f" P{count_col} ")
                     if count_col==(n_col -1):
-                        self.ui.incMatrix_tw.setItem( count_row,count_col+1, QTableWidgetItem(f"transition {count_col}{count_row}"))
+                        self.ui.incMatrix_tw.setItem( count_row,count_col+1, QTableWidgetItem(f"transition {count_row}"))
                     self.ui.incMatrix_tw.setItem( count_row,count_col, QTableWidgetItem(f"{i}"))
                     count_col+=1
                     self.array_matrix.append(i)
