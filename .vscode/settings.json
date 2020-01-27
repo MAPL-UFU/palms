@@ -1,13 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\roger\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe",
+    "python.pythonPath": "palmsEnv/bin/python3",
     "files.associations": {
-        "*.pnml": "xml",
-    },
-    "editor.fontFamily": "Consolas",
-    "editor.fontSize": 17,
-    "editor.fontLigatures": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true,
-    
+        "*.palms": "json",
 }
