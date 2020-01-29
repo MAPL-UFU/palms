@@ -3,15 +3,24 @@ import os
 
 class FileCreator:
 
-    def __init__(self,dir_name,file_name,extension):
+    def __init__(self,dir_name,homedir,file_name,extension):
 
-        self.location = os.path.dirname(os.path.abspath(file_name))+f'/{dir_name}'
+        self.location = os.path.dirname(os.path.abspath(homedir))+f'/{dir_name}'
         self.file_name = file_name
         self.extension = extension
         self.verify_dir(self.location)
 
     def set_text(self,txt):
         f= open(f'{self.location}/{self.file_name}.{self.extension}',"w+")
+        f.write(txt)
+        f.close() 
+
+
+    def set_text_increment(self,txt):
+        if self.verify_if_file(f'{self.location}/{self.file_name}.{self.extension}'):
+            f=open(f'{self.location}/{self.file_name}.{self.extension}', "a")
+        else:
+            f= open(f'{self.location}/{self.file_name}.{self.extension}',"w+")
         f.write(txt)
         f.close() 
 

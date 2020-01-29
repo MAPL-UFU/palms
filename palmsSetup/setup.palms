@@ -3,9 +3,9 @@
     "qtdReaders": 1,
     "readerListConfig": [
         {
-            "qtdAntenna": 2,
-            "readerName": "sdsdsd",
-            "serialPort": "/dev/ttyS3"
+            "qtdAntenna": 1,
+            "readerName": "fgdg",
+            "serialPort": "/dev/ttyUSB0"
         }
     ],
     "transitionNames": [
@@ -18,5 +18,5 @@
         "transition 6",
         "transition 7"
     ],
-    "type": "PNRD"
+    "type": "iPNRD"
 }

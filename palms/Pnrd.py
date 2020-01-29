@@ -13,7 +13,7 @@ class Pnrd:
         self.len_transitions = 0
         self.nets = dict()
         self.fire_vector = list()
-
+        self.transition_names = list()
         self.numpy_inci_matrix_t = list()
         self.numpy_fire_vector = list()
         self.numpy_marking_vector = list()
