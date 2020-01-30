@@ -24,7 +24,7 @@ In the Runtume mode PALMS can receive asynchronously several PNRD/iPNRD
 next state calculus messages containing tag id, reader id, new marking vector,
 transitioning id, exception infor and timestamp. Based on these informations,
 marking vector is updated as well as a runtime history json. If an exception
-is identied, PALMS shows it in its visual interface. Pnml is updated in
+is identified , PALMS shows it in its visual interface. Pnml is updated in
 order to visualize the whoe process through any Petri net modelling tool which
 is able to read this format. PALMS follows pnml format. PALMS doesn't
 deal with exception treatment.
