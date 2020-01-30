@@ -8,11 +8,12 @@ class Pnrd:
         #generate a unique id
         self.file = ''
         self._incidence_matrix_t = []
+        self.incidence_matrix = []
         self.len_places = 0
         self.len_transitions = 0
         self.nets = dict()
         self.fire_vector = list()
-
+        self.transition_names = list()
         self.numpy_inci_matrix_t = list()
         self.numpy_fire_vector = list()
         self.numpy_marking_vector = list()
@@ -33,6 +34,7 @@ class Pnrd:
                 self.len_transitions = net.len_transitions
                 self.len_places = net.len_places 
                 self.marking_vector, self.incidence_matrix_t = net.incidence_matrix()
+                self.incidence_matrix = [[self.incidence_matrix_t[j][i] for j in range(len(self.incidence_matrix_t))] for i in range(len(self.incidence_matrix_t[0]))] 
                 self.numpy_marking_vector = np.array(self.marking_vector)
                 self.numpy_inci_matrix_t = np.matrix(self.incidence_matrix_t)
 
