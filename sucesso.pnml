@@ -1,2 +1,238 @@
 <?xml version='1.0' encoding='utf-8'?>
-<pnml><net id="netId1578684167178"><name><text>example_PN2020</text></name><page id="1"><transition id="8"><name><text>8</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="93" y="172" /></graphics></transition><transition id="9"><name><text>9</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="223" y="172" /></graphics></transition><transition id="10"><name><text>10</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="363" y="172" /></graphics></transition><transition id="11"><name><text>11</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="492" y="243" /></graphics></transition><transition id="12"><name><text>12</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="223" y="243" /></graphics></transition><transition id="13"><name><text>13</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="90" y="316" /></graphics></transition><transition id="14"><name><text>14</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="221" y="314" /></graphics></transition><transition id="15"><name><text>15</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="371" y="314" /></graphics></transition><place id="1"><name><text>1</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="56" y="242" /></graphics><initialMarking><text>0</text></initialMarking></place><place id="2"><name><text>2</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="157" y="171" /></graphics><initialMarking><text>6</text></initialMarking></place><place id="3"><name><text>3</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="289" y="171" /></graphics><initialMarking><text>1</text></initialMarking></place><place id="4"><name><text>4</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="154" y="314" /></graphics><initialMarking><text>0</text></initialMarking></place><place id="5"><name><text>5</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="296" y="313" /></graphics><initialMarking><text>0</text></initialMarking></place><place id="6"><name><text>6</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="414" y="244" /></graphics><initialMarking><text>0</text></initialMarking></place><place id="7"><name><text>7</text><graphics><offset x="0" y="0" /></graphics></name><graphics><position x="565" y="243" /></graphics><initialMarking><text>6</text></initialMarking></place><arc id="17" source="1" target="8" type="normal"><inscription><text>1</text></inscription></arc><arc id="18" source="8" target="2" type="normal"><inscription><text>1</text></inscription></arc><arc id="19" source="2" target="9" type="normal"><inscription><text>1</text></inscription></arc><arc id="20" source="9" target="3" type="normal"><inscription><text>1</text></inscription></arc><arc id="21" source="3" target="10" type="normal"><inscription><text>1</text></inscription></arc><arc id="22" source="10" target="6" type="normal"><inscription><text>1</text></inscription></arc><arc id="23" source="6" target="11" type="normal"><inscription><text>1</text></inscription></arc><arc id="24" source="11" target="7" type="normal"><inscription><text>1</text></inscription></arc><arc id="25" source="6" target="12" type="normal"><inscription><text>1</text></inscription></arc><arc id="26" source="12" target="1" type="normal"><inscription><text>1</text></inscription></arc><arc id="27" source="1" target="13" type="normal"><inscription><text>1</text></inscription></arc><arc id="28" source="13" target="4" type="normal"><inscription><text>1</text></inscription></arc><arc id="29" source="4" target="14" type="normal"><inscription><text>1</text></inscription></arc><arc id="30" source="14" target="5" type="normal"><inscription><text>1</text></inscription></arc><arc id="31" source="5" target="15" type="normal"><inscription><text>1</text></inscription></arc><arc id="32" source="15" target="6" type="normal"><inscription><text>1</text></inscription></arc></page></net></pnml>
+<pnml xmlns="">
+   <net id="netId1578861502204" type="RefNet">
+      <place id="1">
+         <initialMarking>
+            <graphics>
+               <offset x="1" y="-1"/>
+            </graphics>
+            <text>7</text>
+         </initialMarking>
+         <graphics>
+            <position x="67" y="222"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <transition id="2">
+         <graphics>
+            <position x="135" y="221"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <place id="3">
+         <graphics>
+            <position x="194" y="168"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <place id="4">
+         <graphics>
+            <position x="196" y="263"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <transition id="5">
+         <graphics>
+            <position x="269" y="168"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <transition id="6">
+         <graphics>
+            <position x="273" y="264"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <place id="7">
+         <graphics>
+            <position x="347" y="167"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <place id="8">
+         <graphics>
+            <position x="356" y="263"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <transition id="9">
+         <graphics>
+            <position x="423" y="168"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <transition id="10">
+         <graphics>
+            <position x="430" y="264"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <place id="11">
+         <graphics>
+            <position x="501" y="167"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <place id="12">
+         <graphics>
+            <position x="505" y="264"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <transition id="13">
+         <graphics>
+            <position x="568" y="211"/>
+            <dimension x="24" y="16"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </transition>
+      <place id="14">
+         <graphics>
+            <position x="648" y="212"/>
+            <dimension x="20" y="20"/>
+            <fill color="rgb(112,219,147)"/>
+            <line color="rgb(0,0,0)"/>
+         </graphics>
+      </place>
+      <arc id="15" source="1" target="2">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="16" source="2" target="3">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="17" source="2" target="4">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="18" source="3" target="5">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="19" source="5" target="7">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="20" source="7" target="9">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="21" source="9" target="11">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="22" source="4" target="6">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="23" source="6" target="8">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="24" source="8" target="10">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="27" source="10" target="12">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="28" source="12" target="13">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="29" source="11" target="13">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <arc id="30" source="13" target="14">
+         <type>
+            <text>ordinary</text>
+         </type>
+         <graphics>
+            <line color="rgb(0,0,0)" style="solid"/>
+         </graphics>
+      </arc>
+      <name>
+         <text>exampleRenew1_PN2020</text>
+      </name>
+   </net>
+</pnml>
