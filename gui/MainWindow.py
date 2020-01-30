@@ -8,9 +8,17 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+#-------------------------------------------------------------
 import os
+import sys
 
+def resource_path(relative_path):
+     if hasattr(sys, '_MEIPASS'):
+         return os.path.join(sys._MEIPASS, relative_path)
+     return os.path.join(os.path.abspath("."), relative_path)
 
+#--------------------------------------------------------------------
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -134,7 +142,7 @@ class Ui_MainWindow(object):
         self.label_5 = QtWidgets.QLabel(self.tab_setup)
         self.label_5.setMaximumSize(QtCore.QSize(230, 120))
         self.label_5.setText("")
-        self.label_5.setPixmap(QtGui.QPixmap(os.path.abspath("gui/qtGui/images/femec.jpeg")))
+        self.label_5.setPixmap(QtGui.QPixmap(resource_path("gui/qtGui/images/femec.jpeg")))
         self.label_5.setScaledContents(True)
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
         self.label_5.setObjectName("label_5")
@@ -460,7 +468,7 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menubar)
         self.actionopen_pnml = QtWidgets.QAction(MainWindow)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(os.path.abspath("gui/qtGui/images/xml.svg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(resource_path("gui/qtGui/images/xml.svg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionopen_pnml.setIcon(icon)
         self.actionopen_pnml.setObjectName("actionopen_pnml")
         self.actionExit = QtWidgets.QAction(MainWindow)

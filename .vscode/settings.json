@@ -2,4 +2,6 @@
     "python.pythonPath": "",
     "files.associations": {
         "*.palms": "json",
+        "*.spec": "python",
+    }
 }

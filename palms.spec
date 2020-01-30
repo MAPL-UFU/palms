@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+# change de pathex every time you want to rebuild pyinstaller
 block_cipher = None
+added_files = [
+         ( 'gui\\qtGui\images\\femec.jpeg', 'img' ),
+         ( 'gui\\qtGui\\images\\xml.svg', 'img' )
+         ]
 
-
-a = Analysis(['yourprogram.py'],
-             pathex=['/home/rogerhcp/Documentos/estagio/pms'],
+a = Analysis(['main.py'],
+             pathex=['C:\\Users\\roger\\pms'],
              binaries=[],
-             datas=[],
+             datas= added_files,
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -19,14 +22,19 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
           [],
-          exclude_binaries=True,
-          name='yourprogram',
+          name='pamls',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=True )
+          upx_exclude=[],
+          runtime_tmpdir=None,
+          console=False , icon='ico.ico')
+
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
@@ -34,4 +42,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='yourprogram')
+               name='PALMS')
