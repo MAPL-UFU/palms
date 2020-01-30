@@ -2,8 +2,8 @@
 # change de pathex every time you want to rebuild pyinstaller
 block_cipher = None
 added_files = [
-         ( 'gui\\qtGui\images\\femec.jpeg', 'img' ),
-         ( 'gui\\qtGui\\images\\xml.svg', 'img' )
+         ( 'C:\\Users\\roger\\pms\\gui\\qtGui\\images\\femec.jpeg', 'data' ),
+         ( 'C:\\Users\\roger\\pms\\gui\\qtGui\\images\\xml.svg', 'data' )
          ]
 
 a = Analysis(['main.py'],
@@ -26,7 +26,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='pamls',
+          name='palms',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
