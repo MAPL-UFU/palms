@@ -4,17 +4,7 @@ from random import randint # random number for id generation
 
 
 class PetriNet:
-    """ This class represents a Petri net.
 
-    This class represents a Petri net. A Petri net consists of
-    a set of labelled labelled transitions, labelled places and
-    arcs from places to transitions or transitions to places.
-
-    net.edges: List of all edges of this Petri net
-    net.transitions: Map of (id, transition) of all transisions of this Petri net
-    net.places: Map of (id, place) of all places of this Petri net
-    """
-    
     def __init__(self):
         #generate a unique id
         self.id = ("PetriNet" + str(time.time())) + str(randint(0, 1000))

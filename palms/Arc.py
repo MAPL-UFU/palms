@@ -5,22 +5,6 @@ from random import randint # random number for id generation
 
 class Arc:
 
-    """ This class represents an arc of a Petri net. 
-
-    An edge represents an relation between a place and a transition or a transition
-    and a place.
-
-    edge.id: Unique ID of this edge.
-    edge.source: ID of the source (start) node of this edge.
-    edge.target: ID of the target (end) node of this edge.
-    edge.type: ID of the type of this edge.
-    edge.inscription: Inscription of this edge.
-      The inscription is usually an integer which is interpreted as weight of this edge.
-    edge.net: The Petri net which contains this edge.
-      This reference is used for the label resolution of the source and target events.
-      See __str__ method.
-    """
-    
     def __init__(self):
         #generate a unique id
         self.id = ("Arc" + str(time.time())) + str(randint(0, 1000))

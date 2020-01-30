@@ -36,23 +36,7 @@ class MsgThreadQt(QThread):
             except OSError as e:
                 self.msg_status.emit(f"Permission Denied Serial Port and {e}",dict())
                 self.loop.stop()
-                
-        # is_ok,file_names_array = firebird.connect(self.query_dict, location_dir='dados')
-        # if is_ok:
-            
-        #     self.msg_status.emit('Enviando para o Destino...','')
-        #     is_sended,msg = postgres.send_csv(file_names_array)
-
-        #     #Envia os dados em forma Csv para o pasta especificada no location_dir
-        #     self.msg_status.emit('Enviar Dados',msg)
-        #     sleep(0.1)
-        #     self.stop()
-
-        # else:
-        #     mgs = "Erro na Comunicação com a Origem"
-        #     self.msg_status.emit('Enviar Dados',mgs)
-        #     sleep(0.1)
-        #     self.stop()
+ 
     def got_result(self,future):
         print("dfzsfd")
         done,_  = future.result()
@@ -78,5 +62,5 @@ class MsgThreadQt(QThread):
         self.loop.close
         print('Loop Closed')
         self.terminate()
-        print('Thread morta')
+        print('Thread dead')
 

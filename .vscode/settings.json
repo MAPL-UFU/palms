@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "palmsEnv/bin/python3",
+    "python.pythonPath": "",
     "files.associations": {
         "*.palms": "json",
 }

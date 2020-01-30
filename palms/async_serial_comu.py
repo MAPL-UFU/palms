@@ -44,5 +44,5 @@ async def recv(r):
                         return tag
 
         except:
-            return "Erro na leitura"
+            return "ERROR ON READ"
                     

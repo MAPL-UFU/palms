@@ -23,9 +23,9 @@ class Pnrd:
         self.file = file
         try:
             self.nets = parse_pnml_file(self.file)
-            return "Arquivo Carregado com Sucesso",True
+            return "File Uploaded Successfully",True
         except:
-            return "Erro ao Carregar Arquivo",False
+            return "Error Loading File",False
 
     def create_net(self):
 
@@ -39,9 +39,9 @@ class Pnrd:
                 self.numpy_inci_matrix_t = np.matrix(self.incidence_matrix_t)
 
                 self.numpy_marking_vector.shape = (self.len_places,1)
-            return "Net Criada com Sucesso", True
+            return "Net successfully created", True
         except:
-            return "Erro ao Criar Net", False
+            return "Error Creating Net", False
 
 
     def update_pnml(self,fire_vector=list(),token=list(),_type='fire'):
@@ -60,11 +60,11 @@ class Pnrd:
                     net.mount_marking(self.marking_vector)
                     try:
                         write_pnml_file(net,self.file)
-                        return "Arquivo Enviado com Sucesso", True
+                        return "File uploaded successfully", True
                     except:
-                        return "Erro ao Enviar o Arquivo", False
+                        return "Error Sending File", False
             else:
-                msg = f"fire Vector possui um Tamanho Diferente de {self.len_transitions}"
+                msg = f"The Fire Vector has a different size than {self.len_transitions}"
                 return msg,False
         elif _type =='token':
             if len(token) ==self.len_places:
@@ -77,11 +77,11 @@ class Pnrd:
                     net.mount_marking(self.marking_vector)
                     try:
                         write_pnml_file(net,self.file)
-                        return "Arquivo Enviado com Sucesso", True
+                        return "File uploaded successfully", True
                     except:
-                        return "Erro ao Enviar o Arquivo", False
+                        return "Error Sending File", False
             else:
-                msg = f"Token Vector com um tamanho diferente de {self.len_places}"
+                msg = f"Vector Token with a different size of {self.len_places}"
                 return msg,False
 
 
