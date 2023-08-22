@@ -1,5 +1,7 @@
 pnml/__pycache__
 pms-env
 palmsEnv
+envPalms
 build
 dist
+**/__pycache__
