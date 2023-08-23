@@ -2,11 +2,14 @@
 Created on Jan , 2020
 @author: Roger H. Carrijo
 git: roger1618
+
+Updated on Ago 20, 2023
+@author: Roger H. Carrijo
+
 """
 
 import sys
 import json
-from time import sleep
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QFileDialog, QTableWidgetItem
 from MqttThreadQt import MqttThreadQt
@@ -17,20 +20,13 @@ import pytz
 
 from palms.Pnrd import Pnrd
 from palms.FileCreator import FileCreator
-from palms.utils.template import (
-    pnrd_init_template,
-    pnrd_arduino_uno_template,
-    pnrd_arduino_mega_template,
-    ipnrd_init_template,
-    ipnrd_arduino_uno_template,
-)
-import serial
 
 
 class PalmsGui:
-    def __init__(self):
+    def __init__(self, mqtt_broker, mqtt_port):
         # Variables
-
+        self.mqtt_broker = mqtt_broker
+        self.mqtt_port = mqtt_port
         self.pnrd = Pnrd()
         self.pnrd_setup_is_ok = False
         self.pnrd_comm = dict()
@@ -39,9 +35,7 @@ class PalmsGui:
         self.qtd_antena = 0
         self.reader_list = []
         self.transition_names = []
-        self.array_matrix = []
         self.array_marking = []
-        self.starting_token_vector = []
         self.palms_type = ""
         self.text_setup = ""
         app = QtWidgets.QApplication(sys.argv)
@@ -92,97 +86,15 @@ class PalmsGui:
             "readerListConfig": self.reader_list,
             "transitionNames": self.transition_names,
         }
-        palms_file = FileCreator("palmsSetup", self.pnrd.file, "setup", "palms")
-        palms_file.set_text(json.dumps(dict_palms, indent=4, sort_keys=True))
-        str_array_matrix = ",".join(map(str, self.array_matrix))
-        str_starting_token_vector = ",".join(map(str, self.starting_token_vector))
+        self.pnrd.create_palms_file(dict_palms)
+
         if self.palms_type == "PNRD":
-            palms_init_template = FileCreator(
-                "palmsSetup", self.pnrd.file, "pnrd_initTag", "ino"
-            )
-            palms_init_template.set_text(
-                pnrd_init_template(
-                    n_places=self.pnrd.len_places,
-                    n_transitions=self.pnrd.len_transitions,
-                    IncidenceMatrix=str_array_matrix,
-                    StartingTokenVector=str_starting_token_vector,
-                )
-            )
-            id_antenna = 0
-            reader_count = 0
-            for e in self.reader_list:
-                if e["readerName"] == "":
-                    e["readerName"] = "palms"
-
-                readers_file = FileCreator(
-                    "palmsSetup",
-                    self.pnrd.file,
-                    f'pnrd_reader{reader_count}_{e["readerName"]}',
-                    "ino",
-                )
-                if e["qtdAntenna"] == 1:
-                    readers_file.set_text(
-                        pnrd_arduino_uno_template(
-                            n_places=self.pnrd.len_places,
-                            n_transitions=self.pnrd.len_transitions,
-                            readerId=e["readerName"],
-                            antenaId=id_antenna,
-                            positon_fire=id_antenna,
-                        )
-                    )
-                    id_antenna += 1
-                else:
-                    antena_count = []
-                    for i in range(e["qtdAntenna"]):
-                        antena_count.append(id_antenna)
-                        id_antenna += 1
-
-                    readers_file.set_text(
-                        pnrd_arduino_mega_template(
-                            n_places=self.pnrd.len_places,
-                            n_transitions=self.pnrd.len_transitions,
-                            readerId=e["readerName"],
-                            antenaId_list=antena_count,
-                        )
-                    )
-                reader_count += 1
+            self.pnrd.create_pnrd_init_file()
+            self.pnrd.create_pnrd_reader_file(self.reader_list)
         elif self.palms_type == "iPNRD":
-            fire_vector_init = []
-            for i in range(self.pnrd.len_transitions):
-                if i == 0:
-                    fire_vector_init.append(1)
-                else:
-                    fire_vector_init.append(0)
+            self.pnrd.create_ipnrd_init_file()
+            self.pnrd.create_ipnrd_reader_file(self.reader_list)
 
-            palms_init_template = FileCreator(
-                "palmsSetup", self.pnrd.file, "ipnrd_initTag", "ino"
-            )
-            palms_init_template.set_text(
-                ipnrd_init_template(
-                    n_places=self.pnrd.len_places,
-                    n_transitions=self.pnrd.len_transitions,
-                    fire_vector=",".join(map(str, fire_vector_init)),
-                )
-            )
-            for e in self.reader_list:
-                if e["readerName"] == "":
-                    e["readerName"] = "palms"
-
-                readers_file = FileCreator(
-                    "palmsSetup",
-                    self.pnrd.file,
-                    f'ipnrd_reader_{e["readerName"]}',
-                    "ino",
-                )
-                readers_file.set_text(
-                    ipnrd_arduino_uno_template(
-                        n_places=self.pnrd.len_places,
-                        n_transitions=self.pnrd.len_transitions,
-                        readerId=e["readerName"],
-                        IncidenceMatrix=str_array_matrix,
-                        StartingTokenVector=str_starting_token_vector,
-                    )
-                )
         self.ui.popup_info = PopupInfo(
             "Successfully created PALMS file!\nTo open file and use runtime mode press (Ctrl + F)"
         )
@@ -239,7 +151,7 @@ class PalmsGui:
         _, created = self.pnrd.pnrd_setup(filename)
         if created:
             self.setup_matrix_view(self.pnrd.len_transitions, self.pnrd.len_places)
-            self.setup_matrix_vector(self.pnrd.len_places, self.pnrd.len_transitions)
+            self.ui.matrix_array.setText(f"{self.pnrd.incidence_vector}")
             self.setup_marking_vector(self.pnrd.len_places)
             self.pnrd_setup_is_ok = True
             self.count_antenna = self.pnrd.len_transitions
@@ -250,7 +162,7 @@ class PalmsGui:
             self.ui.popup_info = PopupInfo("Error loading PNML file")
             self.ui.popup_info.show()
 
-    def pnrd_palms_runtime(self, filename):
+    def pnrd_palms_for_runtime(self, filename):
         with open(filename, "r") as palms_file:
             palms = json.load(palms_file)
             _, created = self.pnrd.pnrd_setup(palms["pnmlFile"])
@@ -259,9 +171,7 @@ class PalmsGui:
                 self.setup_matrix_view(
                     self.pnrd.len_transitions, self.pnrd.len_places, "palms"
                 )
-                self.setup_matrix_vector(
-                    self.pnrd.len_places, self.pnrd.len_transitions
-                )
+                self.ui.matrix_array.setText(f"{self.pnrd.incidence_vector}")
                 self.setup_marking_vector(self.pnrd.len_places)
                 self.pnrd_setup_is_ok = True
                 self.setup_palms_type()
@@ -269,7 +179,7 @@ class PalmsGui:
                 self.ui.qtdReader_label.setText(f'Qtd Readers: {palms["qtdReaders"]}')
                 readers_list = ""
                 for i in palms["readerListConfig"]:
-                    readers_list += f'Reader: {i["readerName"]} \n  Qtd Ant:{i["qtdAntenna"]} \n  Port: {i["IP"]}\n\n'
+                    readers_list += f'Reader: {i["readerName"]} \n  Topic: client_{i["readerName"]} \n  IP: {i["IP"]}\n\n'
                 self.ui.readerList_label.setText(readers_list)
                 self.reader_list = palms["readerListConfig"]
 
@@ -331,13 +241,6 @@ class PalmsGui:
         self.ui.places_label.setText(f"Places: {self.pnrd.len_places}")
         self.ui.transitions_label.setText(f"Transitions: {self.pnrd.len_transitions}")
 
-    def setup_matrix_vector(self, n_row, n_col):
-        self.array_matrix = []
-        for row in self.pnrd.incidence_matrix_t:
-            for i in row:
-                self.array_matrix.append(i)
-        self.ui.matrix_array.setText(f"{self.array_matrix}")
-
     def setup_marking_vector(self, n_row):
         count_row = 0
 
@@ -346,23 +249,15 @@ class PalmsGui:
         self.ui.markingVector2_tw.setRowCount(n_row)
         self.ui.markingVector2_tw.setColumnCount(1)
         verticalHeader = []
-        self.array_marking = []
-        self.starting_token_vector = []
 
         for i in self.pnrd.marking_vector:
-            if count_row == 0:
-                self.starting_token_vector.append(1)
-            else:
-                self.starting_token_vector.append(0)
-
             verticalHeader.append(f" P{count_row} ")
             self.ui.markingVector_tw.setItem(count_row, 0, QTableWidgetItem(f"{i}"))
             self.ui.markingVector2_tw.setItem(count_row, 0, QTableWidgetItem(f"{i}"))
 
-            self.array_marking.append(i)
             count_row += 1
 
-        self.ui.marking_array.setText(f"{self.array_marking}")
+        self.ui.marking_array.setText(f"{self.pnrd.marking_vector}")
         self.ui.markingVector_tw.setHorizontalHeaderLabels([""])
         self.ui.markingVector_tw.setVerticalHeaderLabels(verticalHeader)
         self.ui.markingVector2_tw.setHorizontalHeaderLabels([""])
@@ -384,7 +279,7 @@ class PalmsGui:
         self.ui.setup_tabWidget.setTabEnabled(0, False)
         self.ui.setup_tabWidget.setCurrentIndex(1)
         if filename != "":
-            self.pnrd_palms_runtime(filename)
+            self.pnrd_palms_for_runtime(filename)
 
     # ----------------------------------------------------------
 
@@ -395,11 +290,12 @@ class PalmsGui:
         return self.pnrd.update_pnml(token=vector, _type="token")
 
     def connect_mqtt(self):
-        mqtt_ips = list()
-        for i in self.reader_list:
-            mqtt_ips.append(i["IP"])
 
-        self.msg_thread = MqttThreadQt(mqtt_ips, parent=None)
+        self.msg_thread = MqttThreadQt(
+            mqtt_broker=self.mqtt_broker,
+            mqtt_port=self.mqtt_port,
+            readers=self.reader_list
+        )
         self.msg_thread.start()
         self.msg_thread.msg_status.connect(self.set_msg_status)
         self.ui.confirmSerialConection_pushButton.setEnabled(False)
@@ -408,54 +304,35 @@ class PalmsGui:
 
     def verify_palms_loader(self):
         if self.pnrd_setup_is_ok:
-            msg = ""
-            try:
-                count = 0
-                for i in self.reader_list:
-                    # Verificar a comunicação MQTT
-                    # ard = serial.Serial(i["IP"], 9600, timeout=5)
-                    # msg = i["IP"]
-                    # ard.flush()
-                    # ard.close()
-                    # sleep(0.3)
-                    count += 1
-                if count == len(self.reader_list):
-                    self.connect_mqtt()
-                else:
-                    self.ui.info_label.setText(
-                        f"Problem with your Serial Connection on port {msg}"
-                    )
-            except OSError as error:
-                self.ui.info_label.setText(
-                    f"A Error occurs with your Serial Connection on port {msg}\n{error}"
-                )
+            self.connect_mqtt()
         else:
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: red}")
             self.ui.info_label.setText("You need to load PALMS file first")
 
     def set_msg_status(self, msg_status, msg):
         try:
-            self.pnrd_comm["id"] = msg["id"]
-            self.pnrd_comm["reader"] = msg["readerId"]
-            self.pnrd_comm["error"] = msg["pnrd"]
-            self.pnrd_comm["antenna"] = msg["ant"]
-            self.pnrd_comm["fire"] = int(msg["fire"])
+            payload = json.loads(msg['payload'])  # Deserialize the payload string into a dictionary
+            self.pnrd_comm["id"] = payload["id"]
+            self.pnrd_comm["reader"] = payload["readerId"]
+            self.pnrd_comm["error"] = payload["pnrd"]
+            self.pnrd_comm["antenna"] = payload["ant"]
+            self.pnrd_comm["fire"] = int(payload["fire"])
             # ----------------------------------------------------
             today = date.today()
             now_BR = datetime.now(pytz.timezone("America/Sao_Paulo"))
 
             # ---------------------------------------------------
-            msg["date"] = today.strftime("%d-%m-%Y")
-            msg["time"] = now_BR.strftime("%H-%M-%S")
+            payload["date"] = today.strftime("%d-%m-%Y")
+            payload["time"] = now_BR.strftime("%H-%M-%S")
             runtime_file = FileCreator("palmsSetup", self.pnrd.file, "runtime", "json")
-            runtime_file.set_text_increment(json.dumps(msg, indent=4, sort_keys=True))
+            runtime_file.set_text_increment(json.dumps(payload, indent=4, sort_keys=True))
 
             self.ui.id_label.setText("TagId: " + str(self.pnrd_comm["id"]))
             self.ui.reader_label.setText("Reader: " + str(self.pnrd_comm["reader"]))
             self.ui.exception_label.setText("PNRD: " + str(self.pnrd_comm["error"]))
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: green}")
             self.ui.info_label.setText(msg_status)
-            self.update_pnrd(msg)
+            self.update_pnrd(payload)
             for i in range(self.pnrd.len_transitions):
                 if i != self.pnrd_comm["fire"]:
                     self.ui.incMatrix2_tw.item(i, self.pnrd.len_places).setBackground(
@@ -492,6 +369,9 @@ class PalmsGui:
             self.ui.stopConnection_pushButton.setEnabled(False)
         except Exception:
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: red}")
-            self.ui.info_label.setText("Close Your Serial Connection before Stop")
+            self.ui.info_label.setText("Close Your  Connection before Stop")
             self.ui.confirmSerialConection_pushButton.setEnabled(False)
             self.ui.stopConnection_pushButton.setEnabled(False)
+
+    def __str__(self) -> str:
+        return f"PalmsGui: {self.pnrd}"

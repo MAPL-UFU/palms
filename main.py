@@ -4,8 +4,10 @@ from PalmsGui import PalmsGui
 
 
 def main():
-    palms = PalmsGui()
-    palms.run()
+    broker = "mqtteste.cloud.shiftr.io"
+    port = 1883
+    palms = PalmsGui(mqtt_broker=broker, mqtt_port=port)
+    print(palms)
 
 
 if __name__ == "__main__":

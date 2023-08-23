@@ -1,5 +1,7 @@
 from .pnml import parse_pnml_file, write_pnml_file
 import numpy as np
+from palms.FileCreator import FileCreator
+import json
 
 
 class Pnrd:
@@ -7,7 +9,14 @@ class Pnrd:
         # generate a unique id
         self.file = ""
         self._incidence_matrix_t = []
+        self.marking_vector = []
+        self.initial_token_vector = []
+        self.initial_fire_vector = []
         self.incidence_matrix = []
+        self.incidence_vector = []
+        self.str_incidence_vector = ""
+        self.str_initial_token_vector = ""
+        self.str_initial_fire_vector = ""
         self.len_places = 0
         self.len_transitions = 0
         self.nets = dict()
@@ -24,6 +33,23 @@ class Pnrd:
             return "File Uploaded Successfully", True
         except Exception:
             return "Error Loading File", False
+
+    def _set_incidence_vector(self):
+        self.incidence_vector = []
+        for row in self.incidence_matrix_t:
+            for i in row:
+                self.incidence_vector.append(i)
+
+        self.str_incidence_vector = " ".join(map(str, self.incidence_vector))
+
+    def set_initial_token_vector(self):
+        length = len(self.marking_vector)
+        self.initial_token_vector = [1] + [0] * (length - 1)
+        self.str_initial_token_vector = " ".join(map(str, self.initial_token_vector))
+
+    def set_initial_fire_vector(self):
+        self.initial_fire_vector = [1] + [0] * (self.len_transitions - 1)
+        self.str_initial_fire_vector = " ".join(map(str, self.initial_fire_vector))
 
     def create_net(self):
         try:
@@ -42,8 +68,12 @@ class Pnrd:
                 self.numpy_inci_matrix_t = np.matrix(self.incidence_matrix_t)
 
                 self.numpy_marking_vector.shape = (self.len_places, 1)
+            self._set_incidence_vector()
+            self.set_initial_token_vector()
+            self.set_initial_fire_vector()
             return "Net successfully created", True
-        except Exception:
+        except Exception as error:
+            print(error)
             return "Error Creating Net", False
 
     def update_pnml(self, fire_vector=list(), token=list(), _type="fire"):
@@ -101,7 +131,78 @@ class Pnrd:
                 return "Net created successfully", True
             return "Error creating net", False
         return "Error loading file", False
-    
+
+    def create_palms_file(self, palms_data):
+        palms_file = FileCreator("palmsSetup", self.file, "setup", "palms")
+        palms_file.set_text(json.dumps(palms_data, indent=4, sort_keys=True))
+
+    def create_pnrd_init_file(self):
+        self.set_initial_token_vector()
+
+        content = f"""{self.len_places}
+{self.len_transitions}
+{len(self.incidence_vector)}
+{len(self.initial_token_vector)}
+{self.str_incidence_vector}
+{self.str_initial_token_vector}
+"""
+
+        pnrd_init = FileCreator("palmsSetup", self.file, "pnrd_initData", "txt")
+        pnrd_init.set_text(content)
+
+    def create_ipnrd_init_file(self):
+        self.set_initial_fire_vector()
+        content = f"""{self.len_places}
+{self.len_transitions}
+{len(self.initial_fire_vector)}
+{self.str_initial_fire_vector}
+"""
+
+        ipnrd_init = FileCreator("palmsSetup", self.file, "ipnrd_initData", "txt")
+        ipnrd_init.set_text(content)
+
+    def create_pnrd_reader_file(self, readers):
+        reader_count = 0
+        for e in readers:
+            if e["readerName"] == "":
+                e["readerName"] = "palms"
+
+            pnrd_readers_file = FileCreator(
+                "palmsSetup/{0}".format(e["readerName"]),
+                self.file,
+                "pnrd_reader",
+                "txt",
+            )
+            content = f"""{self.len_places}
+{self.len_transitions}
+{reader_count}
+{e["readerName"]}
+{e["IP"]}
+"""
+            pnrd_readers_file.set_text(content)
+            reader_count += 1
+
+    def create_ipnrd_reader_file(self, readers):
+        for e in readers:
+            if e["readerName"] == "":
+                e["readerName"] = "palms"
+            content = f"""{self.len_places}
+{self.len_transitions}
+{len(self.incidence_vector)}
+{len(self.initial_token_vector)}
+{self.str_incidence_vector}
+{self.str_initial_token_vector}
+{e["readerName"]}
+{e["IP"]}
+"""
+            ipnrd_readers_file = FileCreator(
+                "palmsSetup/{0}".format(e["readerName"]),
+                self.file,
+                "ipnrd_reader",
+                "txt",
+            )
+            ipnrd_readers_file.set_text(content)
+
     def __str__(self):
         str_i_matrix_t = (
             "Incidence Matrix Transpose: \n" + str(self.numpy_inci_matrix_t) + "\n"
