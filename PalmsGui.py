@@ -9,7 +9,7 @@ import json
 from time import sleep
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QFileDialog, QTableWidgetItem
-from MsgThreadQt import MsgThreadQt
+from MqttThreadQt import MqttThreadQt
 from gui.MainWindow import Ui_MainWindow
 from gui.PopupInfo import PopupInfo
 from datetime import datetime, date
@@ -17,7 +17,6 @@ import pytz
 
 from palms.Pnrd import Pnrd
 from palms.FileCreator import FileCreator
-from palms.utils.find_serial_port import serial_ports
 from palms.utils.template import (
     pnrd_init_template,
     pnrd_arduino_uno_template,
@@ -34,8 +33,7 @@ class PalmsGui:
 
         self.pnrd = Pnrd()
         self.pnrd_setup_is_ok = False
-        self.serial_port_verify, self.serial_port = serial_ports()
-        self.pnrd_serial = dict()
+        self.pnrd_comm = dict()
         self.msg_thread = dict()
         self.count_antenna = 0
         self.qtd_antena = 0
@@ -51,24 +49,23 @@ class PalmsGui:
         self.MainWindow = QtWidgets.QMainWindow()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self.MainWindow)
-
         # ----------------------------------------------------------------------------------------------
-        # self.ui.serialConection_lineEdit.setText(self.serial_port)
         self.ui.actionopen_pnml.triggered.connect(self.open_pnml_file)
         self.ui.actionOpen_Setup_File_palms.triggered.connect(self.open_palms_file)
         self.ui.setupPalms_comboBox.currentIndexChanged.connect(self.setup_palms_type)
-        self.ui.confirmSerialConection_pushButton.clicked.connect(
-            self.verify_palms_loader
-        )
-        self.ui.stopConnection_pushButton.clicked.connect(self.stop_connection)
-        self.ui.addSerial_pushButton.clicked.connect(self.append_reader)
+        self.ui.addIP_pushButton.clicked.connect(self.append_reader)
         self.ui.createSetup_pushButton.clicked.connect(self.create_palms_file)
         self.ui.nAntennas_spinBox.setMaximum(1)
         self.ui.nAntennas_spinBox.setMinimum(3)
         self.ui.setup_tabWidget.setCurrentIndex(0)
-        self.set_comboBox(self.serial_port, "COM")
 
         # ---------------------------------------------------------------------------------------------
+        # RUNTIME
+        self.ui.confirmSerialConection_pushButton.clicked.connect(
+            self.verify_palms_loader
+        )
+        self.ui.stopConnection_pushButton.clicked.connect(self.stop_connection)
+        # --------------------------------------------------------------------------
         self.MainWindow.show()
         sys.exit(app.exec_())
 
@@ -191,41 +188,30 @@ class PalmsGui:
         )
         self.ui.popup_info.show()
         self.ui.createSetup_pushButton.setEnabled(False)
-        self.ui.addSerial_pushButton.setEnabled(False)
+        self.ui.addIP_pushButton.setEnabled(False)
+
+    def _get_reader_data(self):
+        return {
+            "readerName": self.ui.readerName_lineEdit.text(),
+            "IP": self.ui.IP_lineEdit.text(),
+            "qtdAntenna": 0,
+        }
 
     def append_reader(self):
         palms_type = self.setup_palms_type()
-        reader_name = self.ui.readerName_lineEdit.text()
-        serial_connection = self.ui.serialConection_comboBox.currentText()
-        self.serial_port.remove(serial_connection)
-        self.set_comboBox(self.serial_port, "COM")
-        if palms_type == "PNRD":
-            temp_antenna, count_antennas = self.set_antennas()
-            print(count_antennas)
-            if count_antennas <= 0:
-                self.ui.addSerial_pushButton.setEnabled(False)
-            qtd_antena = temp_antenna
-            self.reader_list.append(
-                {
-                    "readerName": reader_name,
-                    "qtdAntenna": qtd_antena,
-                    "serialPort": serial_connection,
-                }
-            )
-            self.text_setup += f"Reader: {reader_name} Port: '{serial_connection}' Ant: {qtd_antena} units\n"
+        reader_data = self._get_reader_data()
 
+        if palms_type == "PNRD":
+            qtd_antenna, count_antennas = self.set_antennas()
+            if count_antennas <= 0:
+                self.ui.addIP_pushButton.setEnabled(False)
+            reader_data["qtdAntenna"] = qtd_antenna
         else:
-            self.reader_list.append(
-                {
-                    "readerName": reader_name,
-                    "qtdAntenna": 1,
-                    "serialPort": serial_connection,
-                }
-            )
-            self.text_setup += (
-                f"Reader: {reader_name} Port: '{serial_connection}' Ant: 1 unit\n"
-            )
-            self.ui.addSerial_pushButton.setEnabled(False)
+            reader_data["qtdAntenna"] = 1
+            self.ui.addIP_pushButton.setEnabled(False)
+
+        self.reader_list.append(reader_data)
+        self.text_setup += f"Reader: {reader_data['readerName']} Port: '{reader_data['IP']}' Ant: {reader_data['qtdAntenna']} unit{'s' if reader_data['qtdAntenna'] > 1 else ''}\n"
         self.ui.setupInfo_label.setText(
             f"P: {self.pnrd.len_places} | T: {self.pnrd.len_transitions}\n{self.text_setup}"
         )
@@ -249,59 +235,43 @@ class PalmsGui:
             self.ui.nAntennas_spinBox.setMinimum(0)
         return qtd_reader_antenna, self.count_antenna
 
-    def set_comboBox(self, lista, fonte):
-        if fonte == "setup":
-            pass
-            # self.ui.comboBox_tabela_origem.clear()
-            # self.ui.comboBox_tabela_origem.addItems(lista)
-        elif fonte == "COM":
-            self.ui.serialConection_comboBox.clear()
-            self.ui.serialConection_comboBox.addItems(lista)
-
     def pnrd_setup(self, filename):
-        _, ok = self.pnrd.set_pnml(filename)
-        if ok:
-            _, created = self.pnrd.create_net()
+        _, created = self.pnrd.pnrd_setup(filename)
+        if created:
+            self.setup_matrix_view(self.pnrd.len_transitions, self.pnrd.len_places)
+            self.setup_matrix_vector(self.pnrd.len_places, self.pnrd.len_transitions)
+            self.setup_marking_vector(self.pnrd.len_places)
+            self.pnrd_setup_is_ok = True
+            self.count_antenna = self.pnrd.len_transitions
+            self.ui.nAntennas_spinBox.setRange(1, self.pnrd.len_transitions)
+            self.ui.qtdTotalTansitions_label.setText(f"(Left: {self.count_antenna})")
+            self.setup_palms_type()
+        else:
+            self.ui.popup_info = PopupInfo("Error loading PNML file")
+            self.ui.popup_info.show()
+
+    def pnrd_palms_runtime(self, filename):
+        with open(filename, "r") as palms_file:
+            palms = json.load(palms_file)
+            _, created = self.pnrd.pnrd_setup(palms["pnmlFile"])
             if created:
-                self.setup_matrix_view(self.pnrd.len_transitions, self.pnrd.len_places)
+                self.pnrd.transition_names = palms["transitionNames"]
+                self.setup_matrix_view(
+                    self.pnrd.len_transitions, self.pnrd.len_places, "palms"
+                )
                 self.setup_matrix_vector(
                     self.pnrd.len_places, self.pnrd.len_transitions
                 )
                 self.setup_marking_vector(self.pnrd.len_places)
                 self.pnrd_setup_is_ok = True
-                self.count_antenna = self.pnrd.len_transitions
-                self.ui.nAntennas_spinBox.setRange(1, self.pnrd.len_transitions)
-                self.ui.qtdTotalTansitions_label.setText(
-                    f"(Left: {self.count_antenna})"
-                )
                 self.setup_palms_type()
-
-    def pnrd_palms_runtime(self, filename):
-        with open(filename, "r") as palms_file:
-            palms = json.load(palms_file)
-            _, ok = self.pnrd.set_pnml(palms["pnmlFile"])
-            if ok:
-                _, created = self.pnrd.create_net()
-                if created:
-                    self.pnrd.transition_names = palms["transitionNames"]
-                    self.setup_matrix_view(
-                        self.pnrd.len_transitions, self.pnrd.len_places, "palms"
-                    )
-                    self.setup_matrix_vector(
-                        self.pnrd.len_places, self.pnrd.len_transitions
-                    )
-                    self.setup_marking_vector(self.pnrd.len_places)
-                    self.pnrd_setup_is_ok = True
-                    self.setup_palms_type()
-                    self.ui.palmsType_label.setText(f'Type: {palms["type"]}')
-                    self.ui.qtdReader_label.setText(
-                        f'Qtd Readers: {palms["qtdReaders"]}'
-                    )
-                    readers_list = ""
-                    for i in palms["readerListConfig"]:
-                        readers_list += f'Reader: {i["readerName"]} \n  Qtd Ant:{i["qtdAntenna"]} \n  Port: {i["serialPort"]}\n\n'
-                    self.ui.readerList_label.setText(readers_list)
-                    self.reader_list = palms["readerListConfig"]
+                self.ui.palmsType_label.setText(f'Type: {palms["type"]}')
+                self.ui.qtdReader_label.setText(f'Qtd Readers: {palms["qtdReaders"]}')
+                readers_list = ""
+                for i in palms["readerListConfig"]:
+                    readers_list += f'Reader: {i["readerName"]} \n  Qtd Ant:{i["qtdAntenna"]} \n  Port: {i["IP"]}\n\n'
+                self.ui.readerList_label.setText(readers_list)
+                self.reader_list = palms["readerListConfig"]
 
     def setup_matrix_view(self, n_row, n_col, _type="pnml"):
         self.ui.incMatrix_tw.setRowCount(n_row)
@@ -400,12 +370,11 @@ class PalmsGui:
 
     def open_pnml_file(self):
         self.ui.createSetup_pushButton.setEnabled(True)
-        self.ui.addSerial_pushButton.setEnabled(True)
+        self.ui.addIP_pushButton.setEnabled(True)
         filename, _ = QFileDialog.getOpenFileName(filter="pnml(*.pnml)")
         self.ui.setup_tabWidget.setCurrentIndex(0)
         self.ui.setup_tabWidget.setTabEnabled(0, True)
         self.ui.setup_tabWidget.setTabEnabled(1, False)
-        _, self.serial_port = serial_ports()
         if filename != "":
             self.pnrd_setup(filename)
 
@@ -425,21 +394,33 @@ class PalmsGui:
     def token_vector(self, vector):
         return self.pnrd.update_pnml(token=vector, _type="token")
 
+    def connect_mqtt(self):
+        mqtt_ips = list()
+        for i in self.reader_list:
+            mqtt_ips.append(i["IP"])
+
+        self.msg_thread = MqttThreadQt(mqtt_ips, parent=None)
+        self.msg_thread.start()
+        self.msg_thread.msg_status.connect(self.set_msg_status)
+        self.ui.confirmSerialConection_pushButton.setEnabled(False)
+        self.ui.info_label.setStyleSheet("QLabel#info_label {color: green}")
+        self.ui.info_label.setText("Successfully connected")
+
     def verify_palms_loader(self):
         if self.pnrd_setup_is_ok:
             msg = ""
             try:
                 count = 0
                 for i in self.reader_list:
-                    self.serial_port = i["serialPort"]
-                    ard = serial.Serial(self.serial_port, 9600, timeout=5)
-                    msg = self.serial_port
-                    ard.flush()
-                    ard.close()
-                    sleep(0.3)
+                    # Verificar a comunicação MQTT
+                    # ard = serial.Serial(i["IP"], 9600, timeout=5)
+                    # msg = i["IP"]
+                    # ard.flush()
+                    # ard.close()
+                    # sleep(0.3)
                     count += 1
                 if count == len(self.reader_list):
-                    self.connect_serial_port()
+                    self.connect_mqtt()
                 else:
                     self.ui.info_label.setText(
                         f"Problem with your Serial Connection on port {msg}"
@@ -452,26 +433,13 @@ class PalmsGui:
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: red}")
             self.ui.info_label.setText("You need to load PALMS file first")
 
-    def connect_serial_port(self):
-        self.serial_ports = list()
-        for i in self.reader_list:
-            serial_port = i["serialPort"]
-            self.serial_ports.append(serial_port)
-
-        self.msg_thread = MsgThreadQt(self.serial_ports, parent=None)
-        self.msg_thread.start()
-        self.msg_thread.msg_status.connect(self.set_msg_status)
-        self.ui.confirmSerialConection_pushButton.setEnabled(False)
-        self.ui.info_label.setStyleSheet("QLabel#info_label {color: green}")
-        self.ui.info_label.setText("Successfully connected")
-
     def set_msg_status(self, msg_status, msg):
         try:
-            self.pnrd_serial["id"] = msg["id"]
-            self.pnrd_serial["reader"] = msg["readerId"]
-            self.pnrd_serial["error"] = msg["pnrd"]
-            self.pnrd_serial["antenna"] = msg["ant"]
-            self.pnrd_serial["fire"] = int(msg["fire"])
+            self.pnrd_comm["id"] = msg["id"]
+            self.pnrd_comm["reader"] = msg["readerId"]
+            self.pnrd_comm["error"] = msg["pnrd"]
+            self.pnrd_comm["antenna"] = msg["ant"]
+            self.pnrd_comm["fire"] = int(msg["fire"])
             # ----------------------------------------------------
             today = date.today()
             now_BR = datetime.now(pytz.timezone("America/Sao_Paulo"))
@@ -482,14 +450,14 @@ class PalmsGui:
             runtime_file = FileCreator("palmsSetup", self.pnrd.file, "runtime", "json")
             runtime_file.set_text_increment(json.dumps(msg, indent=4, sort_keys=True))
 
-            self.ui.id_label.setText("TagId: " + str(self.pnrd_serial["id"]))
-            self.ui.reader_label.setText("Reader: " + str(self.pnrd_serial["reader"]))
-            self.ui.exception_label.setText("PNRD: " + str(self.pnrd_serial["error"]))
+            self.ui.id_label.setText("TagId: " + str(self.pnrd_comm["id"]))
+            self.ui.reader_label.setText("Reader: " + str(self.pnrd_comm["reader"]))
+            self.ui.exception_label.setText("PNRD: " + str(self.pnrd_comm["error"]))
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: green}")
             self.ui.info_label.setText(msg_status)
             self.update_pnrd(msg)
             for i in range(self.pnrd.len_transitions):
-                if i != self.pnrd_serial["fire"]:
+                if i != self.pnrd_comm["fire"]:
                     self.ui.incMatrix2_tw.item(i, self.pnrd.len_places).setBackground(
                         QtGui.QColor(255, 255, 255)
                     )

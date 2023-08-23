@@ -4,4 +4,4 @@ palmsEnv
 envPalms
 build
 dist
-**/__pycache__
+***/__pycache__

@@ -322,7 +322,7 @@ QTabWidget{
                    </size>
                   </property>
                   <property name="text">
-                   <string>Serial COM</string>
+                   <string>ESP32 IP Address</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
@@ -330,17 +330,17 @@ QTabWidget{
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="serialConection_comboBox">
-                  <property name="maximumSize">
-                   <size>
-                    <width>400</width>
-                    <height>16777215</height>
-                   </size>
+                 <widget class="QLineEdit" name="IP_lineEdit">
+                  <property name="inputMask">
+                   <string>000.000.000.000</string>
+                  </property>
+                  <property name="text">
+                   <string>...</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="addSerial_pushButton">
+                 <widget class="QPushButton" name="addIP_pushButton">
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
