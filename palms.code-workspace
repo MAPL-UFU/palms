@@ -10,6 +10,12 @@
 			"*.spec": "python",
 			"*.tcc": "cpp",
 			"fstream": "cpp"
-		}
+		},
+		"[python]": {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "ms-python.black-formatter"
+		},
+		"python.languageServer": "Pylance",
+		"editor.fontFamily": "'DejaVu Sans Mono'",
 	}
 }

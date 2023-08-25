@@ -1,5 +1,7 @@
 from .pnml import parse_pnml_file, write_pnml_file
 import numpy as np
+from datetime import datetime, date
+import pytz
 from palms.FileCreator import FileCreator
 import json
 
@@ -136,7 +138,7 @@ class Pnrd:
         palms_file = FileCreator("palmsSetup", self.file, "setup", "palms")
         palms_file.set_text(json.dumps(palms_data, indent=4, sort_keys=True))
 
-    def create_pnrd_init_file(self):
+    def create_pnrd_init_file(self, wifi, mqtt):
         self.set_initial_token_vector()
 
         content = f"""{self.len_places}
@@ -145,23 +147,35 @@ class Pnrd:
 {len(self.initial_token_vector)}
 {self.str_incidence_vector}
 {self.str_initial_token_vector}
+{wifi["ssid"]}
+{wifi["password"]}
+{mqtt["broker"]}
+{mqtt["port"]}
+{mqtt["username"]}
+{mqtt["password"]}
 """
 
         pnrd_init = FileCreator("palmsSetup", self.file, "pnrd_initData", "txt")
         pnrd_init.set_text(content)
 
-    def create_ipnrd_init_file(self):
+    def create_ipnrd_init_file(self, wifi, mqtt):
         self.set_initial_fire_vector()
         content = f"""{self.len_places}
 {self.len_transitions}
 {len(self.initial_fire_vector)}
 {self.str_initial_fire_vector}
+{wifi["ssid"]}
+{wifi["password"]}
+{mqtt["broker"]}
+{mqtt["port"]}
+{mqtt["username"]}
+{mqtt["password"]}
 """
 
         ipnrd_init = FileCreator("palmsSetup", self.file, "ipnrd_initData", "txt")
         ipnrd_init.set_text(content)
 
-    def create_pnrd_reader_file(self, readers):
+    def create_pnrd_reader_file(self, readers, wifi, mqtt):
         reader_count = 0
         for e in readers:
             if e["readerName"] == "":
@@ -177,12 +191,18 @@ class Pnrd:
 {self.len_transitions}
 {reader_count}
 {e["readerName"]}
+{wifi["ssid"]}
+{wifi["password"]}
+{mqtt["broker"]}
+{mqtt["port"]}
+{mqtt["username"]}
+{mqtt["password"]}
 {e["IP"]}
 """
             pnrd_readers_file.set_text(content)
             reader_count += 1
 
-    def create_ipnrd_reader_file(self, readers):
+    def create_ipnrd_reader_file(self, readers, wifi, mqtt):
         for e in readers:
             if e["readerName"] == "":
                 e["readerName"] = "palms"
@@ -193,6 +213,12 @@ class Pnrd:
 {self.str_incidence_vector}
 {self.str_initial_token_vector}
 {e["readerName"]}
+{wifi["ssid"]}
+{wifi["password"]}
+{mqtt["broker"]}
+{mqtt["port"]}
+{mqtt["username"]}
+{mqtt["password"]}
 {e["IP"]}
 """
             ipnrd_readers_file = FileCreator(
@@ -202,6 +228,44 @@ class Pnrd:
                 "txt",
             )
             ipnrd_readers_file.set_text(content)
+
+    def decode_pnrd_reader_msg(self, msg):
+        try:
+            today = date.today()
+            now_BR = datetime.now(pytz.timezone("America/Sao_Paulo"))
+            date_now = today.strftime("%d-%m-%Y")
+            time = now_BR.strftime("%H-%M-%S")
+            tag = dict()
+            if msg != "":
+                _temp = msg.split("-")
+                if len(_temp) == 7:
+                    for e in _temp:
+                        if e.startswith("I"):  # TAG ID
+                            tag["id"] = e[1:]
+                        elif e.startswith("A"):  # Antena
+                            tag["ant"] = e[1:]
+                        elif e.startswith("R"):  # Reader
+                            tag["readerId"] = e[1:]
+                        elif e.startswith("P"):
+                            tag["pnrd"] = e[1:]
+                        elif e.startswith("T"):
+                            if tag["pnrd"] and tag["pnrd"] == "INIT_TAG":
+                                tag["token"] = list()
+                            else:
+                                string_token = e[2:-1]
+                                tag["token"] = string_token.split(",")
+                                tag["token"] = list(map(int, tag["token"]))
+                        elif e.startswith("F"):
+                            tag["fire"] = int(e[1:])
+                    tag["time"] = time
+                    tag["date"] = date_now
+                if tag == {}:
+                    pass
+                else:
+                    return tag
+
+        except Exception:
+            return "ERROR ON READ"
 
     def __str__(self):
         str_i_matrix_t = (

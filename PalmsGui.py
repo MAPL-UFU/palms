@@ -15,18 +15,28 @@ from PyQt5.QtWidgets import QFileDialog, QTableWidgetItem
 from MqttThreadQt import MqttThreadQt
 from gui.MainWindow import Ui_MainWindow
 from gui.PopupInfo import PopupInfo
-from datetime import datetime, date
-import pytz
 
 from palms.Pnrd import Pnrd
 from palms.FileCreator import FileCreator
 
 
 class PalmsGui:
-    def __init__(self, mqtt_broker, mqtt_port):
+    def __init__(
+        self,
+        wifi_ssid,
+        wifi_password,
+        mqtt_broker,
+        mqtt_port,
+        mqtt_username,
+        mqtt_password,
+    ):
         # Variables
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
+        self.mqtt_username = mqtt_username
+        self.mqtt_password = mqtt_password
+        self.wifi_ssid = wifi_ssid
+        self.wifi_password = wifi_password
         self.pnrd = Pnrd()
         self.pnrd_setup_is_ok = False
         self.pnrd_comm = dict()
@@ -49,8 +59,7 @@ class PalmsGui:
         self.ui.setupPalms_comboBox.currentIndexChanged.connect(self.setup_palms_type)
         self.ui.addIP_pushButton.clicked.connect(self.append_reader)
         self.ui.createSetup_pushButton.clicked.connect(self.create_palms_file)
-        self.ui.nAntennas_spinBox.setMaximum(1)
-        self.ui.nAntennas_spinBox.setMinimum(3)
+        self.ui.nAntennas_spinBox.setMinimum(1)
         self.ui.setup_tabWidget.setCurrentIndex(0)
 
         # ---------------------------------------------------------------------------------------------
@@ -70,7 +79,6 @@ class PalmsGui:
             self.ui.nAntennas_spinBox.setMinimum(1)
             self.ui.qtdTotalTansitions_label.setText(f"(Left: {1})")
         if self.palms_type == "PNRD":
-            self.ui.nAntennas_spinBox.setMaximum(3)
             self.ui.nAntennas_spinBox.setMinimum(1)
             self.ui.qtdTotalTansitions_label.setText(f"(Left: {self.count_antenna})")
         return self.palms_type
@@ -86,14 +94,25 @@ class PalmsGui:
             "readerListConfig": self.reader_list,
             "transitionNames": self.transition_names,
         }
+        wifi = {"ssid": self.wifi_ssid, "password": self.wifi_password}
+        mqtt = {
+            "broker": self.mqtt_broker,
+            "port": self.mqtt_port,
+            "username": self.mqtt_username,
+            "password": self.mqtt_password,
+        }
         self.pnrd.create_palms_file(dict_palms)
 
         if self.palms_type == "PNRD":
-            self.pnrd.create_pnrd_init_file()
-            self.pnrd.create_pnrd_reader_file(self.reader_list)
+            self.pnrd.create_pnrd_init_file(mqtt=mqtt, wifi=wifi)
+            self.pnrd.create_pnrd_reader_file(
+                readers=self.reader_list, mqtt=mqtt, wifi=wifi
+            )
         elif self.palms_type == "iPNRD":
-            self.pnrd.create_ipnrd_init_file()
-            self.pnrd.create_ipnrd_reader_file(self.reader_list)
+            self.pnrd.create_ipnrd_init_file(mqtt=mqtt, wifi=wifi)
+            self.pnrd.create_ipnrd_reader_file(
+                readers=self.reader_list, mqtt=mqtt, wifi=wifi
+            )
 
         self.ui.popup_info = PopupInfo(
             "Successfully created PALMS file!\nTo open file and use runtime mode press (Ctrl + F)"
@@ -137,8 +156,8 @@ class PalmsGui:
     def set_antennas(self):
         if self.count_antenna >= self.ui.nAntennas_spinBox.value():
             self.count_antenna -= self.ui.nAntennas_spinBox.value()
-            qtd_reader_antenna = self.ui.nAntennas_spinBox.value()
-        self.ui.nAntennas_spinBox.setMaximum(3)
+        qtd_reader_antenna = self.ui.nAntennas_spinBox.value()
+        self.ui.nAntennas_spinBox.setMaximum(1)
         self.ui.qtdTotalTansitions_label.setText(f"(Left: {self.count_antenna})")
         if self.count_antenna > 0 and self.count_antenna <= 3:
             self.ui.nAntennas_spinBox.setMaximum(self.count_antenna)
@@ -290,11 +309,12 @@ class PalmsGui:
         return self.pnrd.update_pnml(token=vector, _type="token")
 
     def connect_mqtt(self):
-
         self.msg_thread = MqttThreadQt(
             mqtt_broker=self.mqtt_broker,
             mqtt_port=self.mqtt_port,
-            readers=self.reader_list
+            mqtt_username=self.mqtt_username,
+            mqtt_password=self.mqtt_password,
+            readers=self.reader_list,
         )
         self.msg_thread.start()
         self.msg_thread.msg_status.connect(self.set_msg_status)
@@ -311,39 +331,36 @@ class PalmsGui:
 
     def set_msg_status(self, msg_status, msg):
         try:
-            payload = json.loads(msg['payload'])  # Deserialize the payload string into a dictionary
+            payload = self.pnrd.decode_pnrd_reader_msg(msg["payload"])
             self.pnrd_comm["id"] = payload["id"]
             self.pnrd_comm["reader"] = payload["readerId"]
             self.pnrd_comm["error"] = payload["pnrd"]
             self.pnrd_comm["antenna"] = payload["ant"]
             self.pnrd_comm["fire"] = int(payload["fire"])
             # ----------------------------------------------------
-            today = date.today()
-            now_BR = datetime.now(pytz.timezone("America/Sao_Paulo"))
-
-            # ---------------------------------------------------
-            payload["date"] = today.strftime("%d-%m-%Y")
-            payload["time"] = now_BR.strftime("%H-%M-%S")
             runtime_file = FileCreator("palmsSetup", self.pnrd.file, "runtime", "json")
-            runtime_file.set_text_increment(json.dumps(payload, indent=4, sort_keys=True))
-
+            runtime_file.set_text_increment(
+                json.dumps(payload, indent=4, sort_keys=True)
+            )
             self.ui.id_label.setText("TagId: " + str(self.pnrd_comm["id"]))
             self.ui.reader_label.setText("Reader: " + str(self.pnrd_comm["reader"]))
             self.ui.exception_label.setText("PNRD: " + str(self.pnrd_comm["error"]))
             self.ui.info_label.setStyleSheet("QLabel#info_label {color: green}")
             self.ui.info_label.setText(msg_status)
-            self.update_pnrd(payload)
-            for i in range(self.pnrd.len_transitions):
-                if i != self.pnrd_comm["fire"]:
-                    self.ui.incMatrix2_tw.item(i, self.pnrd.len_places).setBackground(
-                        QtGui.QColor(255, 255, 255)
-                    )
-                else:
-                    self.ui.incMatrix2_tw.item(i, self.pnrd.len_places).setBackground(
-                        QtGui.QColor(0, 255, 0)
-                    )
+            if self.pnrd_comm["error"] != "INIT_TAG":
+                self.update_pnrd(payload)
+                for i in range(self.pnrd.len_transitions):
+                    if i != self.pnrd_comm["fire"]:
+                        self.ui.incMatrix2_tw.item(
+                            i, self.pnrd.len_places
+                        ).setBackground(QtGui.QColor(255, 255, 255))
+                    else:
+                        self.ui.incMatrix2_tw.item(
+                            i, self.pnrd.len_places
+                        ).setBackground(QtGui.QColor(0, 255, 0))
 
-        except Exception:
+        except Exception as error:
+            print(error)
             if msg_status is not None:
                 self.ui.info_label.setStyleSheet("QLabel#info_label {color: red}")
                 self.ui.info_label.setText(msg_status)
