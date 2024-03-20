@@ -1,6 +1,6 @@
 altgraph==0.16.1
 asyncio==3.4.3
-black==23.7.0
+black==24.3.0
 click==8.1.7
 mccabe==0.6.1
 mypy-extensions==1.0.0
